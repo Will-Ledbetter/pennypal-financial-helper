@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upgrade to Pro - PennyPal Advisor</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <h1>💰 PennyPal Advisor</h1>
+                <a href="index.html" class="btn-secondary">← Back to App</a>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="upgrade-section">
+                <h2>Upgrade to Pro</h2>
+                
+                <div class="pricing-container">
+                    <!-- Free Tier -->
+                    <div class="pricing-card">
+                        <div class="tier-header">
+                            <h3>Free</h3>
+                            <div class="price">$0<span>/month</span></div>
+                        </div>
+                        <ul class="features">
+                            <li>✓ 10 AI questions per month</li>
+                            <li>✓ Basic financial advice</li>
+                            <li>✓ Profile management</li>
+                            <li>✓ Secure data storage</li>
+                        </ul>
+                        <button class="btn-secondary" disabled>Current Plan</button>
+                    </div>
+
+                    <!-- Pro Tier -->
+                    <div class="pricing-card featured">
+                        <div class="badge">BEST VALUE</div>
+                        <div class="tier-header">
+                            <h3>Pro</h3>
+                            <div class="price">$9.99<span>/month</span></div>
+                        </div>
+                        <ul class="features">
+                            <li>✓ <strong>Unlimited</strong> AI questions</li>
+                            <li>✓ Advanced financial insights</li>
+                            <li>✓ Priority support</li>
+                            <li>✓ Investment tracking</li>
+                            <li>✓ Debt optimization strategies</li>
+                            <li>✓ Retirement planning tools</li>
+                        </ul>
+                        <button id="checkout-btn" class="btn-primary">Upgrade Now</button>
+                    </div>
+                </div>
+
+                <!-- Payment Form (Hidden until ready) -->
+                <div id="payment-form-container" style="display: none;">
+                    <div class="payment-card">
+                        <h3>Complete Your Upgrade</h3>
+                        <form id="payment-form">
+                            <div id="card-element"></div>
+                            <div id="card-errors" role="alert"></div>
+                            <button type="submit" id="submit-payment" class="btn-primary">
+                                Pay $9.99/month
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Success Message -->
+                <div id="success-message" style="display: none;">
+                    <div class="success-card">
+                        <h3>🎉 Welcome to Pro!</h3>
+                        <p>Your account has been upgraded successfully.</p>
+                        <p>You now have unlimited access to AI financial advice!</p>
+                        <a href="index.html" class="btn-primary">Start Using Pro Features</a>
+                    </div>
+                </div>
+
+                <!-- FAQ -->
+                <div class="faq-section">
+                    <h3>Frequently Asked Questions</h3>
+                    
+                    <div class="faq-item">
+                        <h4>Can I cancel anytime?</h4>
+                        <p>Yes! Cancel anytime from your account settings. No questions asked.</p>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <h4>Is my payment information secure?</h4>
+                        <p>Absolutely. We use Stripe for payment processing. We never store your credit card information.</p>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <h4>What happens to my data if I cancel?</h4>
+                        <p>Your financial profile and history remain intact. You'll revert to the free tier (10 questions/month).</p>
+                    </div>
+                    
+                    <div class="faq-item">
+                        <h4>Do you offer refunds?</h4>
+                        <p>Yes, we offer a 30-day money-back guarantee if you're not satisfied.</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Configuration
+        const AWS_CONFIG = {
+            region: 'us-east-1',
+            userPoolId: 'us-east-1_Nmvta5ZLQ',
+            clientId: 'uc6cmidga31h3olddhib899nv',
+            apiEndpoint: 'https://emhxnvn3j7.execute-api.us-east-1.amazonaws.com/prod'
+        };
+
+        // Stripe configuration (REPLACE WITH YOUR PUBLISHABLE KEY)
+        const STRIPE_PUBLISHABLE_KEY = 'pk_test_YOUR_KEY_HERE';
+        const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+        const elements = stripe.elements();
+
+        // Initialize Cognito
+        const poolData = {
+            UserPoolId: AWS_CONFIG.userPoolId,
+            ClientId: AWS_CONFIG.clientId
+        };
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+        let currentUser = null;
+        let idToken = null;
+
+        // Check authentication
+        const cognitoUser = userPool.getCurrentUser();
+        if (!cognitoUser) {
+            window.location.href = 'login.html';
+        } else {
+            cognitoUser.getSession((err, session) => {
+                if (err || !session.isValid()) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                currentUser = cognitoUser;
+                idToken = session.getIdToken().getJwtToken();
+            });
+        }
+
+        // Setup Stripe card element
+        const cardElement = elements.create('card', {
+            style: {
+                base: {
+                    color: '#e0e0e0',
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '16px',
+                    '::placeholder': {
+                        color: '#aaa'
+                    }
+                },
+                invalid: {
+                    color: '#ef4444'
+                }
+            }
+        });
+
+        // Checkout button
+        document.getElementById('checkout-btn').addEventListener('click', () => {
+            document.getElementById('payment-form-container').style.display = 'block';
+            document.getElementById('checkout-btn').scrollIntoView({ behavior: 'smooth' });
+            
+            // Mount card element if not already mounted
+            if (!cardElement._mounted) {
+                cardElement.mount('#card-element');
+                cardElement._mounted = true;
+            }
+        });
+
+        // Handle card errors
+        cardElement.on('change', (event) => {
+            const displayError = document.getElementById('card-errors');
+            if (event.error) {
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.textContent = '';
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-payment');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+
+            try {
+                // Create payment method
+                const {error, paymentMethod} = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement
+                });
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                // Send to your backend to create subscription
+                const response = await fetch(`${AWS_CONFIG.apiEndpoint}/subscribe`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': idToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        paymentMethodId: paymentMethod.id
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Payment failed');
+                }
+
+                // Show success
+                document.getElementById('payment-form-container').style.display = 'none';
+                document.getElementById('success-message').style.display = 'block';
+                document.getElementById('success-message').scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                alert('Payment failed: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Pay $9.99/month';
+            }
+        });
+    </script>
+</body>
+</html>

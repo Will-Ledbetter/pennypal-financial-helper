@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PennyPal Advisor - Your Personal AI Financial Advisor</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- AWS Amplify SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1>PennyPal Advisor</h1>
+                <div class="user-info">
+                    <span id="questions-remaining" class="questions-badge">Loading...</span>
+                    <span id="user-name">Loading...</span>
+                    <button id="logout-btn" class="btn-secondary">Logout</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Profile Section -->
+            <section class="profile-section">
+                <h2>Your Financial Profile</h2>
+                <div class="profile-card">
+                    <div class="profile-summary" id="profile-summary">
+                        <p class="loading">Loading your profile...</p>
+                    </div>
+                    <button id="edit-profile-btn" class="btn-primary">Edit Profile</button>
+                </div>
+            </section>
+
+            <!-- Profile Edit Modal -->
+            <div id="profile-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Update Your Financial Profile</h2>
+                    <p class="form-note">Fill out as many fields as you'd like - the more information you provide, the better personalized advice you'll receive!</p>
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label for="annual-income">Annual Income ($)</label>
+                            <input type="number" id="annual-income" placeholder="75000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="monthly-expenses">Monthly Expenses ($)</label>
+                            <input type="number" id="monthly-expenses" placeholder="3000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="current-savings">Current Savings ($)</label>
+                            <input type="number" id="current-savings" placeholder="10000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="total-investments">Total Investments ($)</label>
+                            <input type="number" id="total-investments" placeholder="50000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="monthly-investment">Monthly Investment Contribution ($)</label>
+                            <input type="number" id="monthly-investment" placeholder="500">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="retirement-accounts">Retirement Accounts (401k, IRA, etc.) ($)</label>
+                            <input type="number" id="retirement-accounts" placeholder="100000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="investment-types">Investment Types</label>
+                            <input type="text" id="investment-types" placeholder="e.g., Stocks, Bonds, ETFs, Real Estate">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="employer-match">Employer 401k Match (%)</label>
+                            <input type="number" id="employer-match" step="0.1" placeholder="5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="total-debt">Total Debt ($)</label>
+                            <input type="number" id="total-debt" placeholder="25000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="savings-goal">Savings Goal ($)</label>
+                            <input type="number" id="savings-goal" placeholder="50000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="retirement-goal">Retirement Savings Goal ($)</label>
+                            <input type="number" id="retirement-goal" placeholder="1000000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="retirement-age">Target Retirement Age</label>
+                            <input type="number" id="retirement-age" placeholder="65">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="current-age">Current Age</label>
+                            <input type="number" id="current-age" placeholder="35">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dependents">Number of Dependents</label>
+                            <input type="number" id="dependents" placeholder="2">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tax-filing-status">Tax Filing Status</label>
+                            <select id="tax-filing-status">
+                                <option value="">Select status</option>
+                                <option value="single">Single</option>
+                                <option value="married-jointly">Married Filing Jointly</option>
+                                <option value="married-separately">Married Filing Separately</option>
+                                <option value="head-of-household">Head of Household</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="housing-status">Housing Status</label>
+                            <select id="housing-status">
+                                <option value="">Select status</option>
+                                <option value="own">Own</option>
+                                <option value="rent">Rent</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="housing-payment">Monthly Housing Payment ($)</label>
+                            <input type="number" id="housing-payment" placeholder="1500">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="mortgage-balance">Mortgage Balance (if applicable) ($)</label>
+                            <input type="number" id="mortgage-balance" placeholder="250000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="mortgage-rate">Mortgage Interest Rate (if applicable) (%)</label>
+                            <input type="number" id="mortgage-rate" step="0.01" placeholder="3.5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="car-payment">Monthly Car Payment ($)</label>
+                            <input type="number" id="car-payment" placeholder="400">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="car-loan-balance">Car Loan Balance ($)</label>
+                            <input type="number" id="car-loan-balance" placeholder="15000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="other-debt-payment">Other Monthly Debt Payments ($)</label>
+                            <input type="number" id="other-debt-payment" placeholder="200">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="other-debt-balance">Other Debt Balance ($)</label>
+                            <input type="number" id="other-debt-balance" placeholder="5000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="other-debt-description">Other Debt Description</label>
+                            <input type="text" id="other-debt-description" placeholder="e.g., Credit cards, student loans, personal loans">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="risk-tolerance">Risk Tolerance</label>
+                            <select id="risk-tolerance">
+                                <option value="conservative">Conservative</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="aggressive">Aggressive</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="financial-goals">Financial Goals</label>
+                            <textarea id="financial-goals" rows="3" placeholder="e.g., Buy a house, retire early, pay off debt"></textarea>
+                        </div>
+
+                        <!-- Insurance Coverage Section -->
+                        <h3 class="form-section-title">Insurance Coverage (Optional)</h3>
+                        
+                        <div class="form-group">
+                            <label for="life-insurance-value">Life Insurance Policy Value ($)</label>
+                            <input type="number" id="life-insurance-value" placeholder="500000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="health-insurance-deductible">Health Insurance Deductible ($)</label>
+                            <input type="number" id="health-insurance-deductible" placeholder="3000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="health-insurance-premium">Health Insurance Monthly Premium ($)</label>
+                            <input type="number" id="health-insurance-premium" placeholder="400">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="homeowners-insurance">Homeowners/Renters Insurance Annual Premium ($)</label>
+                            <input type="number" id="homeowners-insurance" placeholder="1200">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="auto-insurance">Auto Insurance Annual Premium ($)</label>
+                            <input type="number" id="auto-insurance" placeholder="1500">
+                        </div>
+
+                        <!-- Emergency Planning Section -->
+                        <h3 class="form-section-title">Emergency Fund & Liquidity (Optional)</h3>
+                        
+                        <div class="form-group">
+                            <label for="emergency-fund">Emergency Fund Balance ($)</label>
+                            <input type="number" id="emergency-fund" placeholder="15000">
+                            <small>Separate from regular savings, for emergencies only</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="emergency-fund-goal">Target Emergency Fund Goal ($)</label>
+                            <input type="number" id="emergency-fund-goal" placeholder="20000">
+                            <small>Typically 3-6 months of expenses</small>
+                        </div>
+
+                        <!-- Additional Income Section -->
+                        <h3 class="form-section-title">Additional Income Details (Optional)</h3>
+                        
+                        <div class="form-group">
+                            <label for="bonus-income">Expected Annual Bonus/Commission ($)</label>
+                            <input type="number" id="bonus-income" placeholder="10000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="side-income">Monthly Side/Passive Income ($)</label>
+                            <input type="number" id="side-income" placeholder="500">
+                            <small>Freelance, rental income, dividends, etc.</small>
+                        </div>
+
+                        <!-- Investment Details Section -->
+                        <h3 class="form-section-title">Investment Details (Optional)</h3>
+                        
+                        <div class="form-group">
+                            <label for="asset-allocation">Asset Allocation Breakdown</label>
+                            <input type="text" id="asset-allocation" placeholder="e.g., 60% stocks, 30% bonds, 10% real estate">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="taxable-investments">Taxable Investment Accounts ($)</label>
+                            <input type="number" id="taxable-investments" placeholder="25000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tax-advantaged-investments">Tax-Advantaged Investment Accounts ($)</label>
+                            <input type="number" id="tax-advantaged-investments" placeholder="75000">
+                            <small>401k, IRA, Roth IRA, HSA, etc.</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="expected-return">Expected Annual Investment Return (%)</label>
+                            <input type="number" id="expected-return" step="0.1" placeholder="7">
+                        </div>
+
+                        <!-- Debt Details Section -->
+                        <h3 class="form-section-title">Detailed Debt Information (Optional)</h3>
+                        
+                        <div class="form-group">
+                            <label for="credit-card-limit">Total Credit Card Limits ($)</label>
+                            <input type="number" id="credit-card-limit" placeholder="20000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="credit-utilization">Credit Card Utilization Rate (%)</label>
+                            <input type="number" id="credit-utilization" step="0.1" placeholder="15">
+                            <small>Percentage of credit limit currently used</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="student-loan-balance">Student Loan Balance ($)</label>
+                            <input type="number" id="student-loan-balance" placeholder="30000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="student-loan-rate">Student Loan Interest Rate (%)</label>
+                            <input type="number" id="student-loan-rate" step="0.01" placeholder="4.5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="credit-card-rate">Credit Card Interest Rate (%)</label>
+                            <input type="number" id="credit-card-rate" step="0.01" placeholder="18.99">
+                        </div>
+
+                        <!-- Tax & Benefits Section -->
+                        <h3 class="form-section-title">Tax & Benefits (Optional)</h3>
+                        
+                        <div class="form-group">
+                            <label for="hsa-balance">Health Savings Account (HSA) Balance ($)</label>
+                            <input type="number" id="hsa-balance" placeholder="5000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="hsa-contribution">Annual HSA Contribution ($)</label>
+                            <input type="number" id="hsa-contribution" placeholder="3850">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fsa-contribution">Annual FSA Contribution ($)</label>
+                            <input type="number" id="fsa-contribution" placeholder="2850">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="childcare-benefits">Annual Childcare/Dependent Care Benefits ($)</label>
+                            <input type="number" id="childcare-benefits" placeholder="5000">
+                        </div>
+
+                        <!-- Lifestyle & Future Planning Section -->
+                        <h3 class="form-section-title">Lifestyle & Future Planning (Optional)</h3>
+                        
+                        <div class="form-group">
+                            <label for="planned-expenses">Planned Large Expenses</label>
+                            <textarea id="planned-expenses" rows="2" placeholder="e.g., New car in 2 years ($30k), Home renovation ($50k), Wedding ($25k)"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="education-savings-goal">Education Savings Goal Beyond 529 ($)</label>
+                            <input type="number" id="education-savings-goal" placeholder="50000">
+                            <small>Graduate school, certifications, continuing education</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="education-529-balance">Current 529 Plan Balance ($)</label>
+                            <input type="number" id="education-529-balance" placeholder="25000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="charitable-giving">Annual Charitable Giving Goal ($)</label>
+                            <input type="number" id="charitable-giving" placeholder="2000">
+                        </div>
+
+                        <!-- Retirement Planning Section -->
+                        <h3 class="form-section-title">Retirement Planning (Optional)</h3>
+                        
+                        <div class="form-group">
+                            <label for="social-security-estimate">Estimated Monthly Social Security Benefit ($)</label>
+                            <input type="number" id="social-security-estimate" placeholder="2500">
+                            <small>Check your estimate at ssa.gov</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="pension-benefit">Monthly Pension Benefit ($)</label>
+                            <input type="number" id="pension-benefit" placeholder="1500">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="retirement-spending">Desired Annual Retirement Spending ($)</label>
+                            <input type="number" id="retirement-spending" placeholder="60000">
+                            <small>Target lifestyle in retirement</small>
+                        </div>
+                        
+                        <button type="submit" class="btn-primary">Save Profile</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Advisor Section -->
+            <section class="advisor-section">
+                <h2>Ask Your AI Financial Advisor</h2>
+                <div class="advisor-card">
+                    <div class="question-input">
+                        <textarea id="question-input" rows="3" placeholder="Ask me anything about your finances... (e.g., 'Should I invest more or pay off debt first?', 'How can I save for a house?')"></textarea>
+                        <button id="ask-btn" class="btn-primary">Get Advice</button>
+                    </div>
+                    
+                    <div id="loading-indicator" class="loading-indicator" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>Analyzing your financial situation...</p>
+                    </div>
+                    
+                    <div id="advice-response" class="advice-response" style="display: none;">
+                        <h3>Personalized Advice</h3>
+                        <div id="advice-content"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Conversation History -->
+            <section class="history-section">
+                <h2>Recent Conversations</h2>
+                <div id="conversation-history" class="conversation-history">
+                    <p class="empty-state">No conversations yet. Ask your first question above!</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

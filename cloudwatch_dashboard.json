@@ -1,0 +1,169 @@
+{
+  "widgets": [
+    {
+      "type": "log",
+      "properties": {
+        "query": "SOURCE '/aws/lambda/financial-helper-profile'\n| fields @timestamp, @message\n| filter @message like /Profile saved for user/\n| stats count() as TotalNewProfiles",
+        "region": "us-east-1",
+        "title": "Total New Profiles (All Time)",
+        "stacked": false
+      },
+      "width": 12,
+      "height": 6,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "AWS/Lambda", "Invocations", { "stat": "Sum", "label": "Total Advice Requests" } ]
+        ],
+        "view": "singleValue",
+        "region": "us-east-1",
+        "title": "Total Advice Uses (All Time)",
+        "period": 2592000,
+        "yAxis": {
+          "left": {
+            "min": 0
+          }
+        }
+      },
+      "width": 8,
+      "height": 6,
+      "x": 12,
+      "y": 0
+    },
+    {
+      "type": "log",
+      "properties": {
+        "query": "SOURCE '/aws/lambda/financial-helper-advisor'\n| fields @timestamp, @message\n| filter @message like /Generating advice for user/\n| parse @message /user: (?<userId>[^,]+)/\n| stats count() as Requests by userId\n| sort Requests desc\n| limit 20",
+        "region": "us-east-1",
+        "title": "Total Requests by Profile (Top 20)",
+        "stacked": false
+      },
+      "width": 12,
+      "height": 6,
+      "x": 0,
+      "y": 6
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "AWS/Lambda", "Invocations", { "stat": "Sum", "label": "Advice Requests (24h)" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Advice Requests - Last 24 Hours",
+        "period": 3600,
+        "yAxis": {
+          "left": {
+            "min": 0
+          }
+        }
+      },
+      "width": 12,
+      "height": 6,
+      "x": 12,
+      "y": 6
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "AWS/Lambda", "Duration", { "stat": "Average", "label": "Avg Response Time" } ],
+          [ "...", { "stat": "Maximum", "label": "Max Response Time" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Advice Generation Performance",
+        "period": 300,
+        "yAxis": {
+          "left": {
+            "label": "Milliseconds",
+            "min": 0
+          }
+        }
+      },
+      "width": 12,
+      "height": 6,
+      "x": 12,
+      "y": 6
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "AWS/Lambda", "Errors", { "stat": "Sum", "label": "Advisor Errors", "color": "#d62728" } ],
+          [ "...", { "stat": "Sum", "label": "Profile Errors", "color": "#ff7f0e" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Error Count",
+        "period": 300,
+        "yAxis": {
+          "left": {
+            "min": 0
+          }
+        }
+      },
+      "width": 12,
+      "height": 6,
+      "x": 0,
+      "y": 12
+    },
+    {
+      "type": "metric",
+      "properties": {
+        "metrics": [
+          [ "AWS/DynamoDB", "ConsumedReadCapacityUnits", { "stat": "Sum", "label": "Profile Reads" } ],
+          [ ".", "ConsumedWriteCapacityUnits", { "stat": "Sum", "label": "Profile Writes" } ]
+        ],
+        "view": "timeSeries",
+        "stacked": false,
+        "region": "us-east-1",
+        "title": "Profile Activity",
+        "period": 300,
+        "yAxis": {
+          "left": {
+            "min": 0
+          }
+        }
+      },
+      "width": 12,
+      "height": 6,
+      "x": 12,
+      "y": 12
+    },
+    {
+      "type": "log",
+      "properties": {
+        "query": "SOURCE '/aws/lambda/financial-helper-advisor'\n| fields @timestamp, @message\n| filter @message like /Successfully generated advice/\n| stats count() as SuccessfulAdvice by bin(5m)",
+        "region": "us-east-1",
+        "title": "Successful Advice Generation Rate",
+        "stacked": false
+      },
+      "width": 12,
+      "height": 6,
+      "x": 0,
+      "y": 18
+    },
+    {
+      "type": "log",
+      "properties": {
+        "query": "SOURCE '/aws/lambda/financial-helper-profile'\n| fields @timestamp, @message\n| filter @message like /Profile saved for user/\n| stats count() as NewProfiles by bin(1h)",
+        "region": "us-east-1",
+        "title": "New Profile Registrations",
+        "stacked": false
+      },
+      "width": 12,
+      "height": 6,
+      "x": 12,
+      "y": 18
+    }
+  ]
+}

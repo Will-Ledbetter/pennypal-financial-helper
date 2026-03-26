@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - PennyPal Advisor</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- AWS Amplify SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/amazon-cognito-identity-js@6.3.6/dist/amazon-cognito-identity.min.js"></script>
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <h1>PennyPal Advisor</h1>
+            <p class="tagline">Your Personal AI Financial Advisor</p>
+            
+            <!-- Login Form -->
+            <div id="login-form" class="auth-form">
+                <h2>Welcome Back</h2>
+                <form id="login-form-element">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required placeholder="your@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    
+                    <button type="submit" class="btn-primary btn-full">Login</button>
+                </form>
+                
+                <p class="form-switch">
+                    Don't have an account? <a href="#" id="show-signup">Sign up</a>
+                </p>
+                
+                <div style="margin-top: 20px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 0.8em; color: #aaa; text-align: center;">
+                    <strong>Disclaimer:</strong> PennyPal Advisor provides AI-generated educational information only. This is not professional financial advice. Consult a licensed financial advisor for personalized guidance.
+                </div>
+            </div>
+            
+            <!-- Signup Form -->
+            <div id="signup-form" class="auth-form" style="display: none;">
+                <h2>Create Account</h2>
+                <form id="signup-form-element">
+                    <div class="form-group">
+                        <label for="signup-name">Full Name</label>
+                        <input type="text" id="signup-name" required placeholder="John Doe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" required placeholder="your@email.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" required placeholder="••••••••" minlength="8">
+                        <small>Minimum 8 characters</small>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label style="display: flex; align-items: flex-start; font-size: 0.9em; cursor: pointer;">
+                            <input type="checkbox" id="terms-checkbox" required style="margin-right: 8px; margin-top: 3px;">
+                            <span>I agree to provide my financial information for AI-powered advice and understand that this information will be stored securely and used solely for generating personalized financial recommendations.</span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary btn-full">Create Account</button>
+                </form>
+                
+                <p class="form-switch">
+                    Already have an account? <a href="#" id="show-login">Login</a>
+                </p>
+                
+                <div style="margin-top: 20px; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 0.85em; color: #aaa; line-height: 1.5;">
+                    <strong>Privacy & Security:</strong> Your financial data is encrypted and stored securely. We use AI to provide personalized advice based on your information. Your data is never shared with third parties. This service provides educational information only and is not professional financial advice.
+                </div>
+            </div>
+            
+            <!-- Verification Form -->
+            <div id="verify-form" class="auth-form" style="display: none;">
+                <h2>Verify Your Email</h2>
+                <p>We sent a verification code to your email.</p>
+                <form id="verify-form-element">
+                    <div class="form-group">
+                        <label for="verify-code">Verification Code</label>
+                        <input type="text" id="verify-code" required placeholder="123456">
+                    </div>
+                    
+                    <button type="submit" class="btn-primary btn-full">Verify</button>
+                </form>
+            </div>
+            
+            <div id="auth-message" class="auth-message"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - UPDATE THESE WITH YOUR AWS VALUES
+        const AWS_CONFIG = {
+            region: 'us-east-1',
+            userPoolId: 'us-east-1_Nmvta5ZLQ',  // Update this
+            clientId: 'uc6cmidga31h3olddhib899nv'         // Update this
+        };
+
+        // Initialize Cognito
+        const poolData = {
+            UserPoolId: AWS_CONFIG.userPoolId,
+            ClientId: AWS_CONFIG.clientId
+        };
+        const userPool = new AmazonCognitoIdentity.CognitoUserPool(poolData);
+
+        // DOM Elements
+        const loginForm = document.getElementById('login-form');
+        const signupForm = document.getElementById('signup-form');
+        const verifyForm = document.getElementById('verify-form');
+        const authMessage = document.getElementById('auth-message');
+
+        let currentEmail = '';
+
+        // Show/Hide Forms
+        document.getElementById('show-signup').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'block';
+            verifyForm.style.display = 'none';
+            clearMessage();
+        });
+
+        document.getElementById('show-login').addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'block';
+            signupForm.style.display = 'none';
+            verifyForm.style.display = 'none';
+            clearMessage();
+        });
+
+        // Login
+        document.getElementById('login-form-element').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            const authenticationData = {
+                Username: email,
+                Password: password
+            };
+            
+            const authenticationDetails = new AmazonCognitoIdentity.AuthenticationDetails(authenticationData);
+            
+            const userData = {
+                Username: email,
+                Pool: userPool
+            };
+            
+            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+            
+            showMessage('Logging in...', 'info');
+            
+            cognitoUser.authenticateUser(authenticationDetails, {
+                onSuccess: (result) => {
+                    showMessage('Login successful! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                },
+                onFailure: (err) => {
+                    showMessage(err.message || 'Login failed', 'error');
+                }
+            });
+        });
+
+        // Signup
+        document.getElementById('signup-form-element').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            
+            currentEmail = email;
+            
+            const attributeList = [
+                new AmazonCognitoIdentity.CognitoUserAttribute({
+                    Name: 'email',
+                    Value: email
+                }),
+                new AmazonCognitoIdentity.CognitoUserAttribute({
+                    Name: 'name',
+                    Value: name
+                })
+            ];
+            
+            showMessage('Creating account...', 'info');
+            
+            userPool.signUp(email, password, attributeList, null, (err, result) => {
+                if (err) {
+                    showMessage(err.message || 'Signup failed', 'error');
+                    return;
+                }
+                
+                showMessage('Account created! Please check your email for verification code.', 'success');
+                signupForm.style.display = 'none';
+                verifyForm.style.display = 'block';
+            });
+        });
+
+        // Verify
+        document.getElementById('verify-form-element').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const code = document.getElementById('verify-code').value;
+            
+            const userData = {
+                Username: currentEmail,
+                Pool: userPool
+            };
+            
+            const cognitoUser = new AmazonCognitoIdentity.CognitoUser(userData);
+            
+            showMessage('Verifying...', 'info');
+            
+            cognitoUser.confirmRegistration(code, true, (err, result) => {
+                if (err) {
+                    showMessage(err.message || 'Verification failed', 'error');
+                    return;
+                }
+                
+                showMessage('Email verified! You can now login.', 'success');
+                setTimeout(() => {
+                    verifyForm.style.display = 'none';
+                    loginForm.style.display = 'block';
+                }, 2000);
+            });
+        });
+
+        // Helper Functions
+        function showMessage(message, type) {
+            authMessage.textContent = message;
+            authMessage.className = `auth-message ${type}`;
+            authMessage.style.display = 'block';
+        }
+
+        function clearMessage() {
+            authMessage.style.display = 'none';
+        }
+
+        // Check if already logged in
+        const cognitoUser = userPool.getCurrentUser();
+        if (cognitoUser) {
+            cognitoUser.getSession((err, session) => {
+                if (err || !session.isValid()) {
+                    return;
+                }
+                window.location.href = 'index.html';
+            });
+        }
+    </script>
+</body>
+</html>
