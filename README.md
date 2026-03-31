@@ -2,6 +2,10 @@
 
 A personalized AI-powered financial advisor that remembers your information and provides tailored advice.
 
+## LinkedIn Post
+
+[See it in action](https://www.linkedin.com/posts/will-ledbetter-114318167_aws-amazonkiro-awskiro-activity-7403131213701488641-21KW?utm_source=share&utm_medium=member_desktop&rcm=ACoAACe8W6ABz_yW6tZUwf4zTku75hhXakj6lxU)
+
 ## Architecture
 
 ```
